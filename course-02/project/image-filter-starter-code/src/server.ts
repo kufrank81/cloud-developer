@@ -27,6 +27,22 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   // RETURNS
   //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
 
+  app.get( "/filteredimage", async ( req, res ) => {
+    let image_url  = req.query.image_url;
+    if(!image_url){
+      res.send("A image_url psrsmeter is required");
+    }
+    let expression = "(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})";
+    let regex = new RegExp(expression);
+    if (!image_url.match(regex)) {
+      res.status(400).send("Provided URL was Incorrectly Formatted");
+    }
+    var filteredImagePath = await filterImageFromURL(image_url);
+    res.sendFile(filteredImagePath);
+    let localFiles: string[] = [filteredImagePath];
+    await deleteLocalFiles(localFiles);
+  } );
+
   /**************************************************************************** */
 
   //! END @TODO1
