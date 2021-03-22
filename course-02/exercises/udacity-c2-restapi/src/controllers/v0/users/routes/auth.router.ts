@@ -11,6 +11,8 @@ import { config } from '../../../../config/config';
 
 const router: Router = Router();
 
+const c = config.dev;
+
 async function generatePassword(plainTextPassword: string): Promise<string> {
     //@TODO Use Bcrypt to Generated Salted Hashed Passwords
     const saltRounds = 10;
@@ -130,6 +132,40 @@ router.post('/', async (req: Request, res: Response) => {
 
 router.get('/', async (req: Request, res: Response) => {
     res.send('auth')
+});
+
+router.get('/filterapitoken',  
+    async (req: Request, res: Response) => {
+        const request = require('request-promise');
+        const btoa = require('btoa');
+        const OKTA_ISSUER = c.okta_issuer;
+        const OKTA_CLIENT_ID = c.okta_client_id;
+        const OKTA_CLIENT_SECRET = c.okta_client_secret;
+        const OKTA_SCOPE = c.okta_scope;
+        console.log(OKTA_SCOPE);
+        const sendAPIRequest = async () => {
+            const token = btoa(`${OKTA_CLIENT_ID}:${OKTA_CLIENT_SECRET}`);
+            try {
+                const auth = await request({
+                    uri: `${OKTA_ISSUER}/v1/token`,
+                    json: true,
+                    method: 'POST',
+                    headers: {
+                      authorization: `Basic ${token}`
+                    },
+                    form: {
+                      grant_type: 'client_credentials',
+                      scope: OKTA_SCOPE
+                    }
+                  });
+                  console.log(auth.access_token);
+                return res.status(200).send(auth.access_token);
+            } catch (error) {
+                return res.status(400).send(error);
+            }
+        }
+         sendAPIRequest(); 
+        
 });
 
 export const AuthRouter: Router = router;
