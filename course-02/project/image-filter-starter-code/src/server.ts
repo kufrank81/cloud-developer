@@ -30,17 +30,20 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   app.get( "/filteredimage", async ( req, res ) => {
     let image_url  = req.query.image_url;
     if(!image_url){
-      res.send("A image_url psrsmeter is required");
+      res.status(422).send("A image_url parameter is required");
     }
     let expression = "(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})";
     let regex = new RegExp(expression);
     if (!image_url.match(regex)) {
-      res.status(400).send("Provided URL was Incorrectly Formatted");
+      res.status(422).send("Provided URL was Incorrectly Formatted");
     }
-    var filteredImagePath = await filterImageFromURL(image_url);
-    res.sendFile(filteredImagePath);
-    let localFiles: string[] = [filteredImagePath];
-    await deleteLocalFiles(localFiles);
+    try {
+      var filteredImagePath = await filterImageFromURL(image_url);
+      let localFiles: string[] = [filteredImagePath];
+      res.sendFile(filteredImagePath, async () => await deleteLocalFiles(localFiles));
+    } catch (error) {
+      res.status(415).send("Image URL could not be resolved");
+    }
   } );
 
   /**************************************************************************** */
