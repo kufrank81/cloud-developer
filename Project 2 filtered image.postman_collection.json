@@ -1,0 +1,71 @@
+{
+	"info": {
+		"_postman_id": "f48ac553-da99-4536-973d-de7ee3b15205",
+		"name": "Project 2 filtered image",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get Api Token",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://udagram-frank-dev-dev.us-east-1.elasticbeanstalk.com/api/v0/users/auth/filterapitoken",
+					"protocol": "http",
+					"host": [
+						"udagram-frank-dev-dev",
+						"us-east-1",
+						"elasticbeanstalk",
+						"com"
+					],
+					"path": [
+						"api",
+						"v0",
+						"users",
+						"auth",
+						"filterapitoken"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Filter Image - api token needed",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{insert api token from /users/auth/filterapitoke}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://image-filter-frank-dev-dev.us-east-1.elasticbeanstalk.com/filteredimage?image_url=https://upload.wikimedia.org/wikipedia/commons/b/bd/Golden_tabby_and_white_kitten_n01.jpg",
+					"protocol": "http",
+					"host": [
+						"image-filter-frank-dev-dev",
+						"us-east-1",
+						"elasticbeanstalk",
+						"com"
+					],
+					"path": [
+						"filteredimage"
+					],
+					"query": [
+						{
+							"key": "image_url",
+							"value": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Golden_tabby_and_white_kitten_n01.jpg"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

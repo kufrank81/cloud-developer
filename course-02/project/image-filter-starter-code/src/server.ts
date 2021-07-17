@@ -6,12 +6,14 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
 
   // Init the Express application
   const app = express();
+  const authMiddleware = require('./util/auth')
 
   // Set the network port
   const port = process.env.PORT || 8082;
   
   // Use the body parser middleware for post requests
   app.use(bodyParser.json());
+  app.use(authMiddleware)
 
   // @TODO1 IMPLEMENT A RESTFUL ENDPOINT
   // GET /filteredimage?image_url={{URL}}
@@ -26,6 +28,25 @@ import {filterImageFromURL, deleteLocalFiles} from './util/util';
   //    image_url: URL of a publicly accessible image
   // RETURNS
   //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
+
+  app.get( "/filteredimage", async ( req, res ) => {
+    let image_url  = req.query.image_url;
+    if(!image_url){
+      res.status(422).send("A image_url parameter is required");
+    }
+    let expression = "(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})";
+    let regex = new RegExp(expression);
+    if (!image_url.match(regex)) {
+      res.status(422).send("Provided URL was Incorrectly Formatted");
+    }
+    try {
+      var filteredImagePath = await filterImageFromURL(image_url);
+      let localFiles: string[] = [filteredImagePath];
+      res.sendFile(filteredImagePath, async () => await deleteLocalFiles(localFiles));
+    } catch (error) {
+      res.status(415).send("Image URL could not be resolved");
+    }
+  } );
 
   /**************************************************************************** */
 

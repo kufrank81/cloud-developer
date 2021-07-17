@@ -4,10 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc",
     "clean": "rimraf www/ || true",
-    "build": "npm run clean && tsc && cp package.json www/package.json && mkdir www/tmp/ && cd www && zip -r Archive.zip . && cd ..",
-    "dev": "ts-node-dev ./src/server.ts"
+    "dev": "ts-node-dev ./src/server.ts",
+    "prod": "tsc && node ./www/server.js",
+    "build": "npm run clean && tsc && cp package.json www/package.json && mkdir www\\tmp\\ && cd www && zip -r Archive.zip . && cd ..",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -28,6 +30,7 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
+    "@okta/jwt-verifier": "0.0.12",
     "express": "^4.17.1",
     "jimp": "^0.16.1",
     "rimraf": "^3.0.2"
