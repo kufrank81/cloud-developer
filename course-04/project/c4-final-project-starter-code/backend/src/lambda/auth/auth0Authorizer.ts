@@ -1,4 +1,4 @@
-import { CustomAuthorizerEvent, CustomAuthorizerResult } from 'aws-lambda'
+import { APIGatewayAuthorizerEvent, APIGatewayAuthorizerResult, APIGatewayAuthorizerHandler, APIGatewayTokenAuthorizerEvent } from 'aws-lambda'
 import 'source-map-support/register'
 
 import { verify, decode } from 'jsonwebtoken'
@@ -12,14 +12,20 @@ const logger = createLogger('auth')
 // TODO: Provide a URL that can be used to download a certificate that can be used
 // to verify JWT token signature.
 // To get this URL you need to go to an Auth0 page -> Show Advanced Settings -> Endpoints -> JSON Web Key Set
-const jwksUrl = '...'
+const jwksUrl = 'https://dev-uhhgbavc.us.auth0.com/.well-known/jwks.json'
 
-export const handler = async (
-  event: CustomAuthorizerEvent
-): Promise<CustomAuthorizerResult> => {
-  logger.info('Authorizing a user', event.authorizationToken)
-  try {
-    const jwtToken = await verifyToken(event.authorizationToken)
+export const handler : APIGatewayAuthorizerHandler  = async (
+  event: APIGatewayAuthorizerEvent
+): Promise<APIGatewayAuthorizerResult> => {
+
+  
+
+  try{
+
+    logger.info('Authorizing a user', event)
+
+    const tokenEvent = event as APIGatewayTokenAuthorizerEvent
+    const jwtToken = await verifyToken(tokenEvent.authorizationToken)
     logger.info('User was authorized', jwtToken)
 
     return {
@@ -57,11 +63,25 @@ export const handler = async (
 async function verifyToken(authHeader: string): Promise<JwtPayload> {
   const token = getToken(authHeader)
   const jwt: Jwt = decode(token, { complete: true }) as Jwt
+  const res = await Axios.get(jwksUrl);
+
+  var jwks = res.data.keys;
+  const signingKeys = jwks
+        .filter(key => key.use === 'sig' // JWK property `use` determines the JWK is for signature verification
+                    && key.kty === 'RSA' // We are only supporting RSA (RS256)
+                    && key.kid           // The `kid` must be present to be useful for later
+                    && ((key.x5c && key.x5c.length) || (key.n && key.e)) // Has useful public keys
+        ).map(key => {
+          return { kid: key.kid, nbf: key.nbf, publicKey: certToPEM(key.x5c[0]) };
+        });
+
+  const signingKey = signingKeys.find(key => key.kid === jwt.header.kid)
 
   // TODO: Implement token verification
   // You should implement it similarly to how it was implemented for the exercise for the lesson 5
   // You can read more about how to do this here: https://auth0.com/blog/navigating-rs256-and-jwks/
-  return undefined
+
+  return verify(token, signingKey.publicKey, {algorithms: ['RS256']}) as JwtPayload
 }
 
 function getToken(authHeader: string): string {
@@ -74,4 +94,10 @@ function getToken(authHeader: string): string {
   const token = split[1]
 
   return token
+}
+
+function certToPEM(cert : string) : string {
+  cert = cert.match(/.{1,64}/g).join('\n');
+  cert = `-----BEGIN CERTIFICATE-----\n${cert}\n-----END CERTIFICATE-----\n`;
+  return cert;
 }
