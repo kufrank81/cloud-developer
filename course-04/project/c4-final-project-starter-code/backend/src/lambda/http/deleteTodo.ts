@@ -1,23 +1,17 @@
 import 'source-map-support/register'
-
 import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
-//import * as AWS  from 'aws-sdk'
 import { getUserId } from '../utils'
-import { deleteTodoImage, deleteToDoItem } from '../../data/repository'
-//import { TodoItem } from '../../models/TodoItem'
-//import { loggers } from 'winston'
+import { deleteTodoImage, deleteToDoItem, isTodoUsers } from '../../data/repository'
 import { createLogger } from '../../utils/logger'
-
-//const toDoTable = process.env.TODOS_TABLE
-//const indexName = process.env.INDEX_NAME
-//const docClient = new AWS.DynamoDB.DocumentClient()
 const logger = createLogger('deleteTodo')
 
 export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   
   const todoId = event.pathParameters.todoId
   const userId = getUserId(event)
+  const isTodoYours = await isTodoUsers(todoId, userId)
 
+  if (isTodoYours){
     await deleteToDoItem(todoId, userId)
     logger.info('todo deleted: ', todoId)
     await deleteTodoImage(todoId)
@@ -33,7 +27,8 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
       },
       body: 'Item "${todoId}" was deleted.'
    }
-  
+  }
+
   return {
     statusCode: 404,
     headers: {
@@ -44,31 +39,3 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
       'We are sorry this todo does not belong to you and therefore cannot be deleted.'
   }
 }
-
-//  async function deleteToDoItem(todoId: string, userId: string) {
-//    await docClient.delete({
-//      TableName: toDoTable,
-//      Key:{
-//        "todoId": todoId,
-//        "userId": userId
-//    }
-//    }).promise()
-//    
-//  }
-//
-//  async function isTodoUsers(todoId: string, userId: string): Promise<boolean> {
-//    const result = await docClient
-//    .query({
-//      TableName: toDoTable,
-//      IndexName: indexName,
-//      KeyConditionExpression: 'userId = :userId and todoId = :todoId',
-//      ExpressionAttributeValues: {
-//        ':userId': userId,
-//        ':todoId': todoId
-//      }
-//    })
-//    .promise()
-//  
-//    return !!result
-//  }
-

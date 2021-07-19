@@ -4,7 +4,7 @@ service:
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
-  - serverless-reqvalidator-plugin
+  #- serverless-reqvalidator-plugin
 
 provider:
   name: aws
@@ -12,6 +12,20 @@ provider:
 
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-east-1'}
+
+  # enable AWS X-Ray Tracing
+  tracing:
+    lambda: true
+    apiGateway: true
+    
+  # Attention for indentation here
+  iamRoleStatements:            # Permissions here or under every function to trace
+    - Effect: 'Allow'           # xray tracing permissions
+      Action:
+        - 'xray:PutTraceSegments'             # Trace Segments
+        - 'xray:PutTelemetryRecords'          # Telemetry
+      Resource:
+        - '*'
 
   environment:
     TODOS_TABLE: toDos-${self:provider.stage}
@@ -26,13 +40,13 @@ custom:
         version: v1.0.0
         title: Todo API
         description: Serverless application for todo list
-    models:
-      - name: CreateTodoRequest
-        contentType: application/json
-        schema: ${file(models/create-todo-request.json)}
-      - name: UpdateTodoRequest
-        contentType: application/json
-        schema: ${file(models/update-todo-request.json)}
+    #models:
+    #  - name: CreateTodoRequest
+    #    contentType: application/json
+    #    schema: ${file(src/models/create-todo-request.json)}
+    #  - name: UpdateTodoRequest
+    #    contentType: application/json
+    #    schema: ${file(src/models/update-todo-request.json)}
 
 functions:
 
@@ -68,12 +82,15 @@ functions:
           path: todos
           cors: true
           authorizer: Auth
-          reqValidatorName: RequestBodyValidator
-          documentation:
-            summary: Create a new todo
-            description: Create a new todo
-            requestModels:
-              'application/json': CreateTodoRequest
+          request:
+            schemas:
+              application/json: ${file(src/models/create-todo-request.json)}
+          #reqValidatorName: RequestBodyValidator
+          #documentation:
+          #  summary: Create a new todo
+          #  description: Create a new todo
+          #  requestModels:
+          #    'application/json': CreateTodoRequest
     #deploymentSettings:
     #  type: Linear10PercentEvery1Minute
     #  alias: Live
@@ -96,12 +113,15 @@ functions:
           path: todos/{todoId}
           cors: true
           authorizer: Auth
-          reqValidatorName: RequestBodyValidator
-          documentation:
-            summary: update a new todo
-            description: update a new todo
-            requestModels:
-              'application/json': UpdateTodoRequest
+          request:
+            schemas:
+              application/json: ${file(src/models/update-todo-request.json)}
+          #reqValidatorName: RequestBodyValidator
+          #documentation:
+          #  summary: update a new todo
+          #  description: update a new todo
+          #  requestModels:
+          #    'application/json': UpdateTodoRequest
 
   # TODO: Configure this function
   DeleteTodo:
@@ -111,6 +131,10 @@ functions:
         Action:
           - dynamodb:DeleteItem
         Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+      - Effect: "Allow"        
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.INDEX_NAME}
       - Effect: Allow
         Action:
           - s3:DeleteObject
@@ -188,14 +212,14 @@ resources:
             Projection:
               ProjectionType: ALL # What attributes will be copied to an index
 
-    RequestBodyValidator:
-      Type: AWS::ApiGateway::RequestValidator
-      Properties:
-        Name: 'request-body-validator'
-        RestApiId:
-          Ref: ApiGatewayRestApi
-        ValidateRequestBody: true
-        ValidateRequestParameters: false
+   # RequestBodyValidator:
+   #   Type: AWS::ApiGateway::RequestValidator
+   #   Properties:
+   #     Name: 'request-body-validator'
+   #     RestApiId:
+   #       Ref: ApiGatewayRestApi
+   #     ValidateRequestBody: true
+   #     ValidateRequestParameters: false
 
     AttachmentsBucket:
       Type: AWS::S3::Bucket

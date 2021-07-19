@@ -1,5 +1,4 @@
 import 'source-map-support/register'
-
 import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
 import { getUserId } from '../utils'
 import { todoExists, getUploadUrl, updateToDoItemWithImage } from '../../data/repository'
@@ -42,45 +41,4 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   }
 }
 
-
-//async function todoExists(todoId: string, userId: string) {
-//  const result = await docClient
-//    .get({
-//      TableName: toDoTable,
-//      Key: {
-//        "todoId": todoId,
-//        "userId": userId
-//      }
-//    })
-//    .promise()
-//
-//  console.log('Get todo: ', result)
-//  return !!result.Item
-//}
-
-//async function updateToDoItem(todoId: string, imageId: string, userId: string) {
-//  const attachmentUrl = `https://${bucketName}.s3.amazonaws.com/${imageId}`
-//  await docClient.update({
-//    TableName: toDoTable,
-//    Key:{
-//      "todoId": todoId,
-//      "userId": userId
-//  },
-//    UpdateExpression: "set attachmentUrl = :attachmentUrl",
-//    ExpressionAttributeValues:{
-//      ":attachmentUrl": attachmentUrl
-//  }
-//  }).promise()
-//  
-//}
-
-//function getUploadUrl(imageId: string) {
-//  const expiration: number = +urlExpiration
-//
-//  return s3.getSignedUrl('putObject', {
-//    Bucket: bucketName,
-//    Key: imageId,
-//    Expires: expiration
-//  })
-//}
 

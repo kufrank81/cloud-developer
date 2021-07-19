@@ -1,19 +1,9 @@
 import 'source-map-support/register'
-
 import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
-import * as uuid from 'uuid'
-//import * as AWS  from 'aws-sdk'
-
 import { CreateTodoRequest } from '../../requests/CreateTodoRequest'
-import { TodoItem } from '../../models/TodoItem'
 import { getUserId } from '../utils'
-
 import { createLogger } from '../../utils/logger'
-import { createToDoAccess } from '../../data/repository'
-
-
-//const toDoTable = process.env.TODOS_TABLE
-//const docClient = new AWS.DynamoDB.DocumentClient()
+import { createToDo } from '../../businessLogic/todos'
 
 const logger = createLogger('getToDo')
 
@@ -38,28 +28,4 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   }
 }
 
-
-async function createToDo(newTodo: CreateTodoRequest, userId: string): Promise<TodoItem> {
-
-  const itemId = uuid.v4()
-
-  return await createToDoAccess({
-    todoId: itemId,
-    userId: userId,
-    name: newTodo.name,
-    dueDate: newTodo.dueDate,
-    createdAt: new Date().toISOString(),
-    done: false,
-    attachmentUrl: ""
-  })
-}
-
-//async function createToDoAccess(newToDo: TodoItem): Promise<TodoItem> {
-//  await docClient.put({
-//    TableName: toDoTable,
-//    Item: newToDo
-//  }).promise()
-//
-//  return newToDo
-//}
 

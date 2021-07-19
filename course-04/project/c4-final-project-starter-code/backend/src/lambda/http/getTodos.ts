@@ -1,8 +1,6 @@
 import 'source-map-support/register'
 import { getUserId } from '../utils'
-
 import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
-//import { loggers } from 'winston'
 import { createLogger } from '../../utils/logger'
 import { getUsersTodos } from '../../data/repository'
 
